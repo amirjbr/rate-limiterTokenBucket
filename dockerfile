@@ -1,5 +1,5 @@
 # ---------- Stage 1: Build ----------
-FROM golang:1.21-bullseye AS builder
+FROM golang:1.24.4 AS builder
 
 # Set the working directory inside the container
 WORKDIR /app
