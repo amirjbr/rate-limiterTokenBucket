@@ -1,5 +1,5 @@
 # ---------- Stage 1: Build ----------
-FROM golang:1.22 AS builder
+FROM golang:1.21-bullseye AS builder
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 
 # Download dependencies
-RUN go mod tidy
+RUN go mod download
 
 # Copy the rest of the source code
 COPY . .
@@ -19,16 +19,17 @@ RUN go build -o main .
 # ---------- Stage 2: Run ----------
 FROM alpine:latest
 
-# Install SSL certificates (needed for HTTPS requests)
-RUN apk --no-cache add ca-certificates
 
-WORKDIR /root/
 
+RUN mkdir /app
+
+WORKDIR /app
 # Copy the compiled binary from builder stage
-COPY --from=builder /app/main .
+COPY --from=builder /app/app .
 
 # Expose the port your app listens on
 EXPOSE 8080
+EXPOSE 8081
 
 # Command to run the executable
-CMD ["./main"]
+ENTRYPOINT ["./app"]
