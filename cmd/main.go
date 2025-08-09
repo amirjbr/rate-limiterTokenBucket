@@ -75,9 +75,9 @@ func main() {
 	limiterService := service.NewLimiterService(rdb)
 
 	handlers := httpserver.NewHandler(limiterService)
-	server := httpserver.NewHttpServer(handlers)
+	server := httpserver.NewHttpServer(cfg, handlers)
 
-	server.Engine.Run()
+	server.Engine.Run(cfg.Http.Port)
 
 	//key := "user:123:rate_limit"
 	//
