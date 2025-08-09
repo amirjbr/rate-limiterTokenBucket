@@ -75,7 +75,7 @@ func main() {
 	limiterService := service.NewLimiterService(rdb)
 
 	handlers := httpserver.NewHandler(limiterService)
-	server := httpserver.NewHttpServer(cfg, handlers)
+	server := httpserver.NewHttpServer(handlers)
 
 	server.Engine.Run(cfg.Http.Port)
 
