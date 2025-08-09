@@ -1,10 +1,14 @@
 package main
 
 import (
+	"TokenBucketRateLimiter/config"
 	"TokenBucketRateLimiter/internal/app/httpserver"
 	"TokenBucketRateLimiter/internal/core/service"
 	"context"
+	"fmt"
+	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
+	"log"
 )
 
 var ctx = context.Background()
@@ -52,14 +56,20 @@ end
 `
 
 func main() {
+	err := godotenv.Load("./.env")
+	if err != nil {
+		log.Println("No .env file found, using system env vars instead")
+	}
 
-	//cfg, err := config.LoadConfig()
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(cfg)
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr: ":6379",
+		Addr:     cfg.Redis.Host + ":" + cfg.Redis.Port,
+		Password: cfg.Redis.Password,
 	})
 
 	limiterService := service.NewLimiterService(rdb)

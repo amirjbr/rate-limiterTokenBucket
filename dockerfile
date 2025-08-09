@@ -9,6 +9,7 @@ WORKDIR /app
 # Copy go.mod, go.sum, and vendor folder
 COPY go.mod go.sum ./
 COPY vendor ./vendor
+COPY .env ./
 
 # Copy the rest of the source code
 COPY . .
