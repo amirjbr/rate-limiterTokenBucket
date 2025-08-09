@@ -14,7 +14,7 @@ COPY vendor ./vendor
 COPY . .
 
 # Build the Go app using vendor folder
-RUN go build -mod=vendor -o rateLimiter .
+RUN go build -mod=vendor -o rateLimiter ./cmd
 
 # ---------- Stage 2: Run ----------
 FROM alpine:latest
