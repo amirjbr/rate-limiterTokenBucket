@@ -1,5 +1,7 @@
 package port
 
+import "context"
+
 type Limiter interface {
-	Limit(userID, ip, destinationService, method string) bool
+	Limit(ctx context.Context, userID, ip, destinationService, method string) bool
 }

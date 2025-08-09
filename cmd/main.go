@@ -1,7 +1,7 @@
 package main
 
 import (
-	httpserver2 "TokenBucketRateLimiter/internal/app/httpserver"
+	"TokenBucketRateLimiter/internal/app/httpserver"
 	"TokenBucketRateLimiter/internal/core/service"
 	"context"
 	"github.com/redis/go-redis/v9"
@@ -64,8 +64,8 @@ func main() {
 
 	limiterService := service.NewLimiterService(rdb)
 
-	handlers := httpserver2.NewHandler(limiterService)
-	server := httpserver2.NewHttpServer(handlers)
+	handlers := httpserver.NewHandler(limiterService)
+	server := httpserver.NewHttpServer(handlers)
 
 	server.Engine.Run()
 

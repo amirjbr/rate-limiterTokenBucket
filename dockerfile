@@ -1,35 +1,34 @@
 # ---------- Stage 1: Build ----------
 FROM golang:1.24.4 AS builder
 
-# Set the working directory inside the container
+# Disable CGO for alpine compatibility
+ENV CGO_ENABLED=0 GO111MODULE=on
+
 WORKDIR /app
 
-# Copy go.mod and go.sum first for dependency caching
+# Copy go.mod, go.sum, and vendor folder
 COPY go.mod go.sum ./
-
-# Download dependencies
-RUN go mod download
+COPY vendor ./vendor
 
 # Copy the rest of the source code
 COPY . .
 
-# Build the Go app
-RUN go build -o ./cmd/main .
+# Build the Go app using vendor folder
+RUN go build -mod=vendor -o rateLimiter .
 
 # ---------- Stage 2: Run ----------
 FROM alpine:latest
 
-
-
-RUN mkdir /app
+# Install SSL certificates (needed for HTTPS requests)
+RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
+
 # Copy the compiled binary from builder stage
-COPY --from=builder /app/app .
+COPY --from=builder /app/rateLimiter .
 
 # Expose the port your app listens on
 EXPOSE 8080
-EXPOSE 8081
 
 # Command to run the executable
-ENTRYPOINT ["./app"]
+ENTRYPOINT ["./rateLimiter"]
