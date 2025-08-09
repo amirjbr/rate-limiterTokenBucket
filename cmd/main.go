@@ -59,7 +59,7 @@ func main() {
 	//}
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: ":6379",
 	})
 
 	limiterService := service.NewLimiterService(rdb)
