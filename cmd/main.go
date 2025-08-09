@@ -70,6 +70,7 @@ func main() {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.Redis.Host + ":" + cfg.Redis.Port,
 		Password: cfg.Redis.Password,
+		//Addr: ":6379",
 	})
 
 	limiterService := service.NewLimiterService(rdb)
@@ -77,7 +78,7 @@ func main() {
 	handlers := httpserver.NewHandler(limiterService)
 	server := httpserver.NewHttpServer(handlers)
 
-	server.Engine.Run(cfg.Http.Port)
+	server.Engine.Run()
 
 	//key := "user:123:rate_limit"
 	//

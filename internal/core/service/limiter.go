@@ -30,7 +30,7 @@ elseif table.maxn(bucket) == 4 then
         else
             local grantedTokens = math.floor(intervalSinceLast / intervalPerPermit)
             if grantedTokens > 0 then
-                local padMillis = math.fmod(intervalSinceLast, intervalPerPermit) //tttttttttttt
+                local padMillis = math.fmod(intervalSinceLast, intervalPerPermit) 
                 redis.call('hset', key, 'lastRefillTime', refillTime - padMillis)
             end
             currentTokens = math.min(grantedTokens + tokensRemaining, limit)
@@ -40,7 +40,7 @@ elseif table.maxn(bucket) == 4 then
     end
 end
 
-////////tttttttttttttttttt
+
 assert(currentTokens >= 0)
 
 if currentTokens == 0 then
