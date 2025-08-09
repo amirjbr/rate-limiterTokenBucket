@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: my_go_app
+    depends_on:
+      - redis
+    environment:
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "8080:8080"
+
+  redis:
+    image: redis:latest
+    container_name: my_redis
+    ports:
+      - "6379:6379"
