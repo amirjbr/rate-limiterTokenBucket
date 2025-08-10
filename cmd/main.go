@@ -9,7 +9,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 	"log"
-	"net/url"
 )
 
 var ctx = context.Background()
@@ -69,7 +68,7 @@ func main() {
 	fmt.Println(cfg)
 
 	//url.JoinPath()
-	addr, err := url.JoinPath(cfg.Redis.Host, cfg.Redis.Port)
+	addr := fmt.Sprintf("%v:%v", cfg.Redis.Host, cfg.Redis.Port)
 	fmt.Println(addr)
 	fmt.Println(cfg.Redis.Password)
 	rdb := redis.NewClient(&redis.Options{
