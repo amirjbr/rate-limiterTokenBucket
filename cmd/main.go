@@ -56,7 +56,6 @@ end
 `
 
 func main() {
-	ctx := context.Background()
 	err := godotenv.Load("./.env")
 	if err != nil {
 		log.Println("No .env file found, using system env vars instead")
@@ -77,14 +76,6 @@ func main() {
 		Password: cfg.Redis.Password,
 	})
 
-	res, err := rdb.HSet(ctx, "payment:post", "intervalPerPermit", 5000, "burstTokens", 5, "limit", 5, "interval").Result()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("running hset command")
-
-	fmt.Println(res)
-
 	fmt.Println("*************DEBUG")
 	fmt.Printf("%+v\n", rdb)
 
@@ -101,11 +92,7 @@ func main() {
 
 	//key := "user:123:rate_limit"
 	//
-	//intervalPerPermit := int64(1000)     // 1 token every 1000ms
-	//refillTime := time.Now().UnixMilli() // current time in ms
-	//burstTokens := int64(5)              // full bucket capacity
-	//limit := int64(5)                    // maximum tokens allowed
-	//interval := int64(5000)              // total refill interval
+	// total refill interval
 	//
 	//result, err := rdb.Eval(ctx, rateLimiterLua, []string{key},
 	//	intervalPerPermit,
