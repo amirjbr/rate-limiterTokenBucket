@@ -56,6 +56,7 @@ end
 `
 
 func main() {
+	ctx := context.Background()
 	err := godotenv.Load("./.env")
 	if err != nil {
 		log.Println("No .env file found, using system env vars instead")
@@ -75,6 +76,14 @@ func main() {
 		Addr:     addr,
 		Password: cfg.Redis.Password,
 	})
+
+	res, err := rdb.HSet(ctx, "payment:post", "intervalPerPermit", 5000, "burstTokens", 5, "limit", 5, "interval").Result()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("running hset command")
+
+	fmt.Println(res)
 
 	fmt.Println("*************DEBUG")
 	fmt.Printf("%+v\n", rdb)
