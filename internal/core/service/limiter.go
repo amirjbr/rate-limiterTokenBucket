@@ -67,6 +67,7 @@ func (s *Service) Limit(ctx context.Context, userID, ip, destinationService, met
 	var rule entity.RateLimitRule
 	ruleKey := fmt.Sprintf("%s:%s", destinationService, method)
 
+	fmt.Println("step 10", s.redis)
 	res, err := s.redis.HGetAll(ctx, ruleKey).Result()
 	if err != nil {
 		log.Fatal(err)
