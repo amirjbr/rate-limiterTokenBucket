@@ -20,16 +20,19 @@ func (h *Handler) LimitHandler(c *gin.Context) {
 	destinationService := "payment"
 	method := "post"
 
-	res := h.LimiterSvc.Limit(c, userID, ip, destinationService, method)
-	if !res {
+	res, err := h.LimiterSvc.Limit(c, userID, ip, destinationService, method)
+	if err == nil && res {
+		c.JSON(http.StatusOK, gin.H{
+			"Message": "allowed",
+		})
+		return
+	}
+
+	if err.Error() == service.RateLimitExceededError && !res {
 		c.JSON(http.StatusTooManyRequests, gin.H{
 			"Message": "rate limit exceeded",
 		})
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"Message": "allowed",
-	})
 
 }

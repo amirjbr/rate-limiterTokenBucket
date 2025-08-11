@@ -1,5 +1,6 @@
 package entity
 
+// talk about this
 type Bucket struct {
 	Key               string
 	IntervalPerPermit int

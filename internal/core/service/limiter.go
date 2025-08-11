@@ -2,9 +2,10 @@ package service
 
 import (
 	"TokenBucketRateLimiter/internal/core/entity"
+	"TokenBucketRateLimiter/internal/core/port/redisPort"
 	"context"
+	"errors"
 	"fmt"
-	"github.com/redis/go-redis/v9"
 	"log"
 	"strconv"
 	"time"
@@ -52,45 +53,89 @@ else
 end
 `
 
+var RateLimitExceededError = "rate limit exceeded"
+
 type Service struct {
-	redis *redis.Client
+	rdb redisPort.RedisRepo
 }
 
-func NewLimiterService(rdb *redis.Client) *Service {
+func NewLimiterService(rdb redisPort.RedisRepo) *Service {
 	return &Service{
-		redis: rdb,
+		rdb: rdb,
 	}
 }
 
-func (s *Service) Limit(ctx context.Context, userID, ip, destinationService, method string) bool {
+func (s *Service) Limit(ctx context.Context, userID, ip, destinationService, method string) (bool, error) {
 	//LoadRules from redis and define bucket limit and interval based on entity then send it to redis and see is it allow or not
 	var rule entity.RateLimitRule
 	ruleKey := fmt.Sprintf("%s:%s", destinationService, method)
-
-	fmt.Println("step 10", s.redis)
-	res, err := s.redis.HGetAll(ctx, ruleKey).Result()
+	res, err := s.rdb.GetRule(ctx, ruleKey)
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
-	// need to make this operation as a function and handle errors and validations there
-	rule.Limit, err = strconv.Atoi(res["limit"])
-	rule.BurstTokens, err = strconv.Atoi(res["burstTokens"])
-	rule.Interval, err = strconv.Atoi(res["interval"])
-	rule.RefillTime = int(time.Now().UnixMilli())
-	rule.IntervalPerPermit, err = strconv.Atoi(res["intervalPerPermit"])
+	if len(res) == 0 {
+		return false, errors.New("no rate limit rule")
+	}
+
+	validatedRule, err := FillRuleFields(res, rule)
 
 	bucketKey := fmt.Sprintf("userID:%s:ip:%s:service:%s:method:%s", userID, ip, destinationService, method)
 	keys := []string{bucketKey}
 
-	rateLimitResult, err := s.redis.Eval(ctx, rateLimiterLua, keys, rule.IntervalPerPermit, rule.RefillTime, rule.BurstTokens, rule.Limit, rule.Interval).Result()
+	evalResult, err := s.rdb.EvaluateScript(ctx, rateLimiterLua, keys, validatedRule)
 	if err != nil {
 		log.Fatal(err)
 	}
+	if evalResult == 1 {
+		return true, nil
+	}
+	return false, errors.New(RateLimitExceededError)
 
-	if rateLimitResult == int64(1) {
-		return true
+}
+
+func FillRuleFields(data map[string]string, rule entity.RateLimitRule) (entity.RateLimitRule, error) {
+	var err error
+	rule.Limit, err = strconv.Atoi(data["limit"])
+	if err != nil {
+		return entity.RateLimitRule{}, err
+	}
+	rule.BurstTokens, err = strconv.Atoi(data["burstTokens"])
+	if err != nil {
+		return entity.RateLimitRule{}, err
+	}
+	rule.Interval, err = strconv.Atoi(data["interval"])
+	if err != nil {
+		return entity.RateLimitRule{}, err
+	}
+	rule.RefillTime = int(time.Now().UnixMilli())
+	rule.IntervalPerPermit, err = strconv.Atoi(data["intervalPerPermit"])
+	if err != nil {
+		return entity.RateLimitRule{}, err
+	}
+	err = ValidateRuleFields(rule)
+	if err != nil {
+		return entity.RateLimitRule{}, errors.New("invalid rule ")
 	}
 
-	return false
+	return rule, nil
+}
 
+func ValidateRuleFields(rule entity.RateLimitRule) error {
+	fields := []struct {
+		name  string
+		value int
+	}{
+		{"Limit", rule.Limit},
+		{"BurstTokens", rule.BurstTokens},
+		{"Interval", rule.Interval},
+		{"RefillTime", rule.RefillTime},
+		{"IntervalPerPermit", rule.IntervalPerPermit},
+	}
+
+	for _, f := range fields {
+		if f.value == 0 {
+			return fmt.Errorf("invalid rate limit field: %s", f.name)
+		}
+	}
+	return nil
 }

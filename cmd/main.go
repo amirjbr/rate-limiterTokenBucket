@@ -2,12 +2,14 @@ package main
 
 import (
 	"TokenBucketRateLimiter/config"
+	"TokenBucketRateLimiter/internal/adapter/redisClient"
+	"TokenBucketRateLimiter/internal/adapter/redisClient/repository"
 	"TokenBucketRateLimiter/internal/app/httpserver"
 	"TokenBucketRateLimiter/internal/core/service"
+	"TokenBucketRateLimiter/pkg/observeutil"
 	"context"
 	"fmt"
 	"github.com/joho/godotenv"
-	"github.com/redis/go-redis/v9"
 	"log"
 )
 
@@ -68,24 +70,27 @@ func main() {
 	fmt.Println(cfg)
 
 	//url.JoinPath()
-	addr := fmt.Sprintf("%v:%v", cfg.Redis.Host, cfg.Redis.Port)
-	fmt.Println(addr)
-	fmt.Println(cfg.Redis.Password)
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: cfg.Redis.Password,
-	})
+	//addr := fmt.Sprintf("%v:%v", cfg.Redis.Host, cfg.Redis.Port)
+	//fmt.Println(addr)
+	//fmt.Println(cfg.Redis.Password)
+	//rdb := redis.NewClient(&redis.Options{
+	//	Addr: "localhost:6379",
+	//	//Password: cfg.Redis.Password,
+	//})
+
+	rdb := redisClient.NewRedisClient(cfg)
+	redisRepo := repository.NewRedisImpl(rdb)
 
 	fmt.Println("*************DEBUG")
 	fmt.Printf("%+v\n", rdb)
 
 	fmt.Println("step 1")
-	limiterService := service.NewLimiterService(rdb)
+	limiterService := service.NewLimiterService(redisRepo)
 	fmt.Println("step 2")
-
+	metrics := observeutil.Setup()
 	handlers := httpserver.NewHandler(limiterService)
 	fmt.Println("step 3")
-	server := httpserver.NewHttpServer(handlers)
+	server := httpserver.NewHttpServer(handlers, &metrics)
 	fmt.Println("step 4")
 
 	server.Engine.Run()
